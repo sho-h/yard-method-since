@@ -11,8 +11,13 @@ class YardMethodSince
   end
 
   def generate
-    versions = generate_databases(@config[:target_directory])
-    compare_databases(@config[:target_directory], versions)
+    if !@config[:skip_parse]
+      generate_databases(@config[:target_directory],
+                         from: @config[:from], to: @config[:to])
+    end
+    compare_databases(@config[:target_directory],
+                      github: @config[:github],
+                      from: @config[:from], to: @config[:to])
   end
 
   private
@@ -22,6 +27,8 @@ class YardMethodSince
     opt = OptionParser.new
     opt.on('--from VAL') {|v| @config[:from] = v }
     opt.on('--to VAL') {|v| @config[:to] = v }
+    opt.on('--github VAL') {|v| @config[:github] = v }
+    opt.on('--skip-parsing') { @config[:skip_parse] = true}
     opt.parse!(argv)
 
     if argv.length > 2
