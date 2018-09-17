@@ -1,5 +1,37 @@
 #!/usr/bin/env ruby
 
+require 'optparse'
 require "yard/method/since"
 
-Yard::Method::Since.generate_databases(ARGV.first || '.')
+class YardMethodSince
+  include Yard::Method::Since
+
+  def initialize(argv)
+    parse_options(argv)
+  end
+
+  def generate
+    versions = generate_databases(@config[:target_directory])
+    compare_databases(@config[:target_directory], versions)
+  end
+
+  private
+
+  def parse_options(argv)
+    @config = {}
+    opt = OptionParser.new
+    opt.on('--from VAL') {|v| @config[:from] = v }
+    opt.on('--to VAL') {|v| @config[:to] = v }
+    opt.parse!(argv)
+
+    if argv.length > 2
+      puts("usage")
+      exit(1)
+    end
+
+    @config[:target_directory] = argv.first
+  end
+end
+
+doc = YardMethodSince.new(ARGV)
+doc.generate
