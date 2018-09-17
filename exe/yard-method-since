@@ -1,3 +1,5 @@
 #!/usr/bin/env ruby
 
 require "yard/method/since"
+
+Yard::Method::Since.generate_databases(ARGV.first || '.')
