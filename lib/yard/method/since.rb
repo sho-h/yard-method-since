@@ -5,13 +5,10 @@ require 'rugged'
 module Yard
   module Method
     module Since
-      def generate_databases(dir, rc: false, stable: false, from: nil, to: nil)
+      def generate_databases(dir, skip_rc: true, skip_stable: true, from: nil, to: nil)
         d = '.' if dir.nil?
         Dir.chdir(d) do
-          versions(from, to, d).each do |version|
-            next if !rc && /-rc1\z/i.match(version)
-            next if !stable && /-stable\z/i.match(version)
-
+          versions(from, to, skip_rc, skip_stable, d).each do |version|
             puts "generating #{version}..."
             Rugged::Repository.new(d).checkout(version,
                                                strategy: :force)
@@ -25,13 +22,13 @@ module Yard
                                            strategy: :force)
       end
 
-      def compare_databases(dir, from: nil, to: nil, github: nil)
+      def compare_databases(dir, from: nil, to: nil, skip_rc: true, skip_stable: true, github: nil)
         d = '.' if dir.nil?
         res = []
         regexp = /\A(Added|Modified|Removed) objects:/
 
         Dir.chdir(d) do
-          versions(from, to, d).sort.each_cons(2) do |v1, v2|
+          versions(from, to, skip_rc, skip_stable, d).sort.each_cons(2) do |v1, v2|
             puts "comparing #{v1} and #{v2}..."
             out, st = Open3.capture2('yard', 'diff',
                                   yardoc_path(v1), yardoc_path(v2))
@@ -73,12 +70,16 @@ EOS
                          'compare', "#{v1}...#{v2}")
       end
 
-      def versions(from = nil, to = nil, d = '.')
+      def versions(from = nil, to = nil, skip_rc = true, skip_stable = true, d = '.')
         repo = Rugged::Repository.new(d)
         from_ver = Gem::Version.new(from) if from
         to_ver = Gem::Version.new(to) if to
         return repo.tags.map(&:name).select { |v|
           case
+          when skip_rc && /-rc1\z/i.match(v)
+            false
+          when skip_stable && /-stable\z/i.match(v)
+            false
           when from_ver && Gem::Version.new(v) < from_ver
             false
           when to_ver && Gem::Version.new(v) > to_ver
