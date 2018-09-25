@@ -41,10 +41,10 @@ module Yard
                 if md = /\A\s*([^\s]+)\s*\(([^)]+)\)/.match(s)
                   method = md[1]
                   path = md[2].split(':').first
-                  a = [nil, method, v2, t.downcase, '', nil]
+                  a = [nil, method, path, v2, t.downcase, '', nil]
                   if github
                     url = github_compare_url(github, v1, v2, path)
-                    a[4] = "[compare url](#{url})"
+                    a[5] = "[compare url](#{url})"
                   end
                   res << a
                 end
@@ -54,8 +54,8 @@ module Yard
         end
 
         puts <<EOS
-| class/method | version | action | detail |
-|--------------|---------|--------|--------|
+| class/method | path |version | action | detail |
+|--------------|------|--------|--------|--------|
 EOS
 
           puts res.sort { |a, b|
