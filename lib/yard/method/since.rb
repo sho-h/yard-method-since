@@ -54,8 +54,8 @@ module Yard
         end
 
         puts <<EOS
-| method | version | action | detail |
-|--------|---------|--------|--------|
+| class/method | version | action | detail |
+|--------------|---------|--------|--------|
 EOS
 
           puts res.sort { |a, b|
