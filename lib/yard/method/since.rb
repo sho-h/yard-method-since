@@ -1,5 +1,6 @@
 require "yard/method/since/version"
 require 'open3'
+require 'digest/md5'
 require 'rugged'
 
 module Yard
@@ -37,13 +38,16 @@ module Yard
             }.each { |t, *methods|
               t = t.slice(regexp, 1)
               methods.each { |s|
-                m = s.slice(/\A\s*([^\s]+)/, 1)
-                a = [nil, m, v2, t.downcase, '', nil]
-                if github
-                  url = github_compare_url(github, v1, v2)
-                  a[4] = "[compare url](#{url})"
+                if md = /\A\s*([^\s]+)\s*\(([^)]+)\)/.match(s)
+                  method = md[1]
+                  path = md[2].split(':').first
+                  a = [nil, method, v2, t.downcase, '', nil]
+                  if github
+                    url = github_compare_url(github, v1, v2, path)
+                    a[4] = "[compare url](#{url})"
+                  end
+                  res << a
                 end
-                res << a
               }
             }
           end
@@ -65,9 +69,11 @@ EOS
       end
 
       # only github
-      def github_compare_url(github, v1, v2)
-        return File.join('https://github.com', github,
-                         'compare', "#{v1}...#{v2}")
+      def github_compare_url(github, v1, v2, path = nil)
+        url = File.join('https://github.com', github,
+                        'compare', "#{v1}...#{v2}")
+        url += "#diff-#{Digest::MD5.hexdigest(path)}" if path
+        return url
       end
 
       def versions(from = nil, to = nil, skip_rc = true, skip_stable = true, d = '.')
